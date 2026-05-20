@@ -1,0 +1,21 @@
+{
+	"name": "@jayobado/vue-dsl",
+	"version": "0.1.8",
+	"license": "MIT",
+	"exports": {
+		".": "./src/mod.ts",
+		"./primitives": "./src/primitives/mod.ts",
+		"./dsl": "./src/dsl/mod.ts",
+		"./query": "./src/query/mod.ts"
+	},
+
+	"imports": {
+		"vue": "npm:vue@^3.5.13",
+		"@standard-schema/spec": "npm:@standard-schema/spec@^1.0.0"
+	},
+
+	"compilerOptions": {
+    "strict": true,
+    "lib": ["ESNext", "DOM"]
+  }
+}
