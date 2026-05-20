@@ -115,10 +115,10 @@ export function useToasts(): ToastsApi {
  */
 export const toast = {
 	show: showImpl,
-	info: (msg: string, opts?: Omit<ToastOptions, 'kind'>) => showImpl(msg, { ...opts, kind: 'info' }),
-	success: (msg: string, opts?: Omit<ToastOptions, 'kind'>) => showImpl(msg, { ...opts, kind: 'success' }),
-	warning: (msg: string, opts?: Omit<ToastOptions, 'kind'>) => showImpl(msg, { ...opts, kind: 'warning' }),
-	error: (msg: string, opts?: Omit<ToastOptions, 'kind'>) => showImpl(msg, { ...opts, kind: 'error' }),
+	info: (msg: string, opts?: Omit<ToastOptions, 'kind'>): string => showImpl(msg, { ...opts, kind: 'info' }),
+	success: (msg: string, opts?: Omit<ToastOptions, 'kind'>): string => showImpl(msg, { ...opts, kind: 'success' }),
+	warning: (msg: string, opts?: Omit<ToastOptions, 'kind'>): string => showImpl(msg, { ...opts, kind: 'warning' }),
+	error: (msg: string, opts?: Omit<ToastOptions, 'kind'>): string => showImpl(msg, { ...opts, kind: 'error' }),
 	dismiss: dismissImpl,
 	clear: clearImpl,
 }
