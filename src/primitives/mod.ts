@@ -30,6 +30,9 @@ export { useClipboard } from './use-clipboard.ts'
 // Notifications
 export { useToasts, toast } from './use-toasts.ts'
 
+// Document head
+export { useHead } from './use-head.ts'
+
 // Types
 export type {
 	Placement,
@@ -37,6 +40,8 @@ export type {
 	UseFloatingOptions,
 	UseFloatingReturn,
 } from './use-floating.ts'
+
+export type { HeadMeta, UseHeadOptions } from './use-head.ts'
 
 export type {
 	Toast,
