@@ -26,3 +26,6 @@ export type { AccordionEngine, AccordionNode, AccordionPanel } from './accordion
 
 export { createBlockEngine, useBlock } from './block.ts'
 export type { BlockEngine, BlockNode } from './block.ts'
+
+export { createAlertEngine, useAlert } from './alert.ts'
+export type { AlertEngine, AlertNode, AlertSeverity } from './alert.ts'

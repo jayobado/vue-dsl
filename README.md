@@ -89,7 +89,7 @@ Or pin in `deno.json`:
 ```jsonc
 {
   "imports": {
-    "@jayobado/vue-dsl": "jsr:@jayobado/vue-dsl@^0.2.5",
+    "@jayobado/vue-dsl": "jsr:@jayobado/vue-dsl@^0.2.6",
     "vue": "npm:vue@^3.5.13"
   }
 }
@@ -117,7 +117,7 @@ import { useForm, useQuery, useHead } from '@jayobado/vue-dsl'
 
 | Entry | Contents |
 | --- | --- |
-| `./dsl` | the declarative node layer — `useForm` / `useTable` (plus setup-free `createFormEngine` / `createTableEngine`), container nodes `useModal` / `useTabs` / `useStepper` / `useAccordion` / `useBlock` (each with a setup-free `createXEngine`), the data-driven vocabulary `renderAction`/`renderActionGroup`, `renderDisplay` (text/badge/image), and the content seam `renderContent` (leaf) / `createContentEngine` (full `PanelContent` — forms, tables, and containers nest as pure data) |
+| `./dsl` | the declarative node layer — `useForm` (rules: `required`, `minLength`, `maxLength`, `pattern`, `min`, `max`, `match`, `custom`) / `useTable` (plus setup-free `createFormEngine` / `createTableEngine`), container nodes `useModal` / `useTabs` / `useStepper` / `useAccordion` / `useBlock` / `useAlert` (each with a setup-free `createXEngine`), the data-driven vocabulary `renderAction`/`renderActionGroup`, `renderDisplay` (text/badge/image), and the content seam `renderContent` (leaf) / `createContentEngine` (full `PanelContent` — forms, tables, and containers nest as pure data) |
 | `./query` | `useQuery`, `useMutation` — reactive wrappers over any Promise |
 | `./primitives` | headless composables: `useHead`, `useToasts`/`toast`, `useClipboard`, `useMediaQuery`, `useLocalStorage`, `useFloating`, `usePagination`, `useSelection`, `useClickOutside`, `useEscapeKey`, `useEventListener`, `useFocusTrap`, `useScrollLock`, `useResizeObserver`, `useIntersectionObserver`, `useDebounce`, `useInterval` |
 | `./elements` | typed element factories (`div`, `button`, `input`, `table`, … + `ElProps`/`InputElProps`/…) and `withMemo` / `createMemoCache` — render-function authoring |
@@ -135,7 +135,9 @@ import { useForm, useQuery, useHead } from '@jayobado/vue-dsl'
 - Your own data client. `useQuery` / `useMutation` wrap any Promise-returning
   function.
 - A Standard Schema validator (Zod, Valibot, ArkType, …) if you want
-  schema-based form validation. Rule-based validation works without one.
+  schema-based form validation. Rule-based validation works without one — the
+  built-in rule helpers (`required`, `minLength`, `maxLength`, `pattern`, `min`,
+  `max`, `match`, `custom`) drop straight into a field's `rules` array.
 
 ## Quick start
 

@@ -27,6 +27,49 @@ export function custom(
 	return { test, message }
 }
 
+// ─── Declarative rule helpers ──────────────────────────────────────────────
+//
+// Each returns a {@link ValidationRule} to drop into a field's `rules` array.
+// Like all non-required rules, they're skipped for empty optional fields (see
+// `validateWithRules`), so pair them with `required()` for mandatory fields.
+
+const len = (value: unknown): number | null =>
+	typeof value === 'string' || Array.isArray(value) ? value.length : null
+
+/** Fails when a string/array is shorter than `n`. */
+export function minLength(n: number, message = `Must be at least ${n} characters`): ValidationRule {
+	return { test: (value) => { const l = len(value); return l === null || l >= n }, message }
+}
+
+/** Fails when a string/array is longer than `n`. */
+export function maxLength(n: number, message = `Must be at most ${n} characters`): ValidationRule {
+	return { test: (value) => { const l = len(value); return l === null || l <= n }, message }
+}
+
+/** Fails when a string doesn't match `regex`. */
+export function pattern(regex: RegExp, message = 'Invalid format'): ValidationRule {
+	return { test: (value) => typeof value !== 'string' || regex.test(value), message }
+}
+
+/** Fails when a number is below `n`. */
+export function min(n: number, message = `Must be at least ${n}`): ValidationRule {
+	return { test: (value) => typeof value !== 'number' || value >= n, message }
+}
+
+/** Fails when a number is above `n`. */
+export function max(n: number, message = `Must be at most ${n}`): ValidationRule {
+	return { test: (value) => typeof value !== 'number' || value <= n, message }
+}
+
+/**
+ * Fails when the value doesn't equal an expected value. Pass a getter so it
+ * reads the latest value at validation time — e.g. cross-field confirmation:
+ * `match(() => state.value.password, 'Passwords must match')`.
+ */
+export function match(getExpected: () => unknown, message = 'Values do not match'): ValidationRule {
+	return { test: (value) => value === getExpected(), message }
+}
+
 function isEmpty(value: unknown): boolean {
 	if (value === null || value === undefined) return true
 	if (typeof value === 'string') return value.trim() === ''

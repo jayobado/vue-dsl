@@ -3,6 +3,7 @@ import { type Display, renderDisplay } from './display.ts'
 import { createFormEngine, type FormNode } from './form/mod.ts'
 import { createTableEngine, type TableNode } from './table/mod.ts'
 import { type AccordionNode, createAccordionEngine } from './accordion.ts'
+import { type AlertNode, createAlertEngine } from './alert.ts'
 import { type BlockNode, createBlockEngine } from './block.ts'
 import { createStepperEngine, type StepperNode } from './stepper.ts'
 import { createTabsEngine, type TabsNode } from './tabs.ts'
@@ -30,6 +31,7 @@ export type PanelContent =
 	| StepperNode
 	| AccordionNode
 	| BlockNode
+	| AlertNode
 
 /** Normalize one-or-many content into an array. */
 export function toContentList<T>(content: T | T[]): T[] {
@@ -90,6 +92,11 @@ function createItemEngine(item: PanelContent): ItemEngine {
 			case 'block': {
 				const engine = createBlockEngine(item)
 				return { render: engine.render, dispose: engine.dispose }
+			}
+			case 'alert': {
+				const engine = createAlertEngine(item)
+				// Alert renders null once dismissed; coerce to '' for inline embedding.
+				return { render: () => engine.render() ?? '', dispose: engine.dispose }
 			}
 		}
 	}

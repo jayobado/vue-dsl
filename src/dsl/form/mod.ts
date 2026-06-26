@@ -5,6 +5,12 @@ export { createFormEngine, useForm } from './use-form.ts'
 export {
 	required,
 	custom,
+	minLength,
+	maxLength,
+	pattern,
+	min,
+	max,
+	match,
 	validateWithRules,
 	validateWithSchema,
 } from './validate.ts'
