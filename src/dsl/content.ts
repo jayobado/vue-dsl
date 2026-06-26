@@ -2,6 +2,10 @@ import type { VNode } from 'vue'
 import { type Display, renderDisplay } from './display.ts'
 import { createFormEngine, type FormNode } from './form/mod.ts'
 import { createTableEngine, type TableNode } from './table/mod.ts'
+import { type AccordionNode, createAccordionEngine } from './accordion.ts'
+import { type BlockNode, createBlockEngine } from './block.ts'
+import { createStepperEngine, type StepperNode } from './stepper.ts'
+import { createTabsEngine, type TabsNode } from './tabs.ts'
 
 /**
  * Leaf content — items that render purely from data, with no reactive engine to
@@ -11,16 +15,21 @@ export type LeafContent = string | Display
 
 /**
  * Everything a container node (modal, tabs, accordion, block, …) can hold:
- * leaf items plus the setup-bound nodes (`form`, `table`). The setup-bound
- * nodes can't be rendered by a pure function — they own effect scopes — so the
- * full union is driven through {@link createContentEngine}, which instantiates a
- * child engine per item and disposes them together. (`alert` and nested
- * containers join the union as those nodes land.)
+ * leaf items, the setup-bound `form`/`table` engines, and the inline containers
+ * themselves (so screens nest as pure data). None of these can be rendered by a
+ * pure function — they own effect scopes — so the full union is driven through
+ * {@link createContentEngine}, which instantiates a child engine per item and
+ * disposes them together. (`modal` is deliberately excluded: it's a triggered
+ * overlay, not inline content; `alert` joins the union as that node lands.)
  */
 export type PanelContent =
 	| LeafContent
 	| FormNode<Record<string, unknown>>
 	| TableNode
+	| TabsNode
+	| StepperNode
+	| AccordionNode
+	| BlockNode
 
 /** Normalize one-or-many content into an array. */
 export function toContentList<T>(content: T | T[]): T[] {
@@ -60,9 +69,29 @@ function createItemEngine(item: PanelContent): ItemEngine {
 	if ('type' in item) {
 		return { render: () => renderDisplay(item), dispose: noop }
 	}
-	if ('node' in item && item.node === 'form') {
-		const engine = createFormEngine(item)
-		return { render: () => engine.render() as VNode, dispose: engine.dispose }
+	if ('node' in item) {
+		switch (item.node) {
+			case 'form': {
+				const engine = createFormEngine(item)
+				return { render: () => engine.render() as VNode, dispose: engine.dispose }
+			}
+			case 'tabs': {
+				const engine = createTabsEngine(item)
+				return { render: engine.render, dispose: engine.dispose }
+			}
+			case 'stepper': {
+				const engine = createStepperEngine(item)
+				return { render: engine.render, dispose: engine.dispose }
+			}
+			case 'accordion': {
+				const engine = createAccordionEngine(item)
+				return { render: engine.render, dispose: engine.dispose }
+			}
+			case 'block': {
+				const engine = createBlockEngine(item)
+				return { render: engine.render, dispose: engine.dispose }
+			}
+		}
 	}
 	if ('query' in item) {
 		const engine = createTableEngine(item)

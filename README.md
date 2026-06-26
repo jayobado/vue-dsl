@@ -89,7 +89,7 @@ Or pin in `deno.json`:
 ```jsonc
 {
   "imports": {
-    "@jayobado/vue-dsl": "jsr:@jayobado/vue-dsl@^0.2.4",
+    "@jayobado/vue-dsl": "jsr:@jayobado/vue-dsl@^0.2.5",
     "vue": "npm:vue@^3.5.13"
   }
 }
@@ -117,7 +117,7 @@ import { useForm, useQuery, useHead } from '@jayobado/vue-dsl'
 
 | Entry | Contents |
 | --- | --- |
-| `./dsl` | the declarative node layer — `useForm` / `useTable` (plus setup-free `createFormEngine` / `createTableEngine` for nesting), the data-driven node vocabulary `renderAction`/`renderActionGroup`, `renderDisplay` (text/badge/image), and the container-content seam `renderContent` (leaf) / `createContentEngine` (full `PanelContent`, incl. nested forms & tables) |
+| `./dsl` | the declarative node layer — `useForm` / `useTable` (plus setup-free `createFormEngine` / `createTableEngine`), container nodes `useModal` / `useTabs` / `useStepper` / `useAccordion` / `useBlock` (each with a setup-free `createXEngine`), the data-driven vocabulary `renderAction`/`renderActionGroup`, `renderDisplay` (text/badge/image), and the content seam `renderContent` (leaf) / `createContentEngine` (full `PanelContent` — forms, tables, and containers nest as pure data) |
 | `./query` | `useQuery`, `useMutation` — reactive wrappers over any Promise |
 | `./primitives` | headless composables: `useHead`, `useToasts`/`toast`, `useClipboard`, `useMediaQuery`, `useLocalStorage`, `useFloating`, `usePagination`, `useSelection`, `useClickOutside`, `useEscapeKey`, `useEventListener`, `useFocusTrap`, `useScrollLock`, `useResizeObserver`, `useIntersectionObserver`, `useDebounce`, `useInterval` |
 | `./elements` | typed element factories (`div`, `button`, `input`, `table`, … + `ElProps`/`InputElProps`/…) and `withMemo` / `createMemoCache` — render-function authoring |
@@ -194,6 +194,56 @@ What's happening:
 From here, you'd add schema validation, more field types, array sections for
 tabular forms, steps for wizards, and a query composable for data fetching.
 See [Concepts](docs/concepts.md) and [The declarative layer](docs/declarative.md).
+
+### Data-driven containers
+
+Container nodes (`useModal`, `useTabs`, `useStepper`, `useAccordion`, `useBlock`)
+describe whole screens as data. Their `content` is a `PanelContent` union, so
+forms, tables, and other containers **nest as plain data** — no wrapper
+components, no manual wiring. Each composable returns reactive state plus a
+`render()`:
+
+```ts
+import { defineComponent } from 'vue'
+import { useBlock } from '@jayobado/vue-dsl/dsl'
+
+export const SettingsPanel = defineComponent({
+	setup() {
+		const panel = useBlock({
+			node: 'block',
+			title: 'Settings',
+			collapsible: true,
+			actions: [{ label: 'Save all', action: 'save' }],
+			onAction: (a) => { if (a === 'save') saveAll() },
+			content: {
+				node: 'tabs',
+				tabs: [
+					{
+						key: 'profile',
+						label: 'Profile',
+						content: {
+							node: 'form',
+							initial: { name: '' },
+							onSubmit: (s) => api.profile.save(s),
+							children: [{ node: 'input', name: 'name', label: 'Name', required: true }],
+						},
+					},
+					{ key: 'security', label: 'Security', content: 'Coming soon' },
+				],
+			},
+		})
+
+		return () => panel.render()  // a <div> block > tab list > active panel (the form)
+	},
+})
+```
+
+The nested `form` is instantiated lazily by the container and torn down with it
+— `useBlock` binds disposal to the component scope. (Building content outside a
+component? Use the setup-free `createBlockEngine`/`createTabsEngine`/… and call
+`engine.dispose()` yourself.) `useModal` is the one container not allowed as
+nested `content` — it's a triggered overlay (`modal.show()` / `modal.hide()`,
+rendered via `<Teleport>`), not inline content.
 
 ### Data — `useQuery` / `useMutation`
 

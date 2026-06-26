@@ -70,6 +70,21 @@ export function renderAction(action: Action, ctx: ActionContext = {}): VNode | n
 	}, action.label)
 }
 
+/** Either a single action or a group of them — the shape container headers/footers take. */
+export type ActionItem = Action | ActionGroup
+
+/** Render an {@link ActionItem}, dispatching to action vs. group by shape. Null if hidden. */
+export function renderActionItem(item: ActionItem, ctx: ActionContext = {}): VNode | null {
+	return 'items' in item ? renderActionGroup(item, ctx) : renderAction(item, ctx)
+}
+
+/** Render a list of action items, dropping any that are hidden. */
+export function renderActionItems(items: readonly ActionItem[], ctx: ActionContext = {}): VNode[] {
+	return items
+		.map((item) => renderActionItem(item, ctx))
+		.filter((v): v is VNode => v !== null)
+}
+
 /** Render a group of actions — a labelled menu, or inline if unlabelled. Null if hidden. */
 export function renderActionGroup(group: ActionGroup, ctx: ActionContext = {}): VNode | null {
 	const state = ctx.state ?? {}
