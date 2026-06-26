@@ -8,5 +8,5 @@ export type { Action, ActionContext, ActionGroup, Toggle } from './action.ts'
 export { renderDisplay } from './display.ts'
 export type { Badge, Display, Image, Text } from './display.ts'
 
-export { renderContent, toContentList } from './content.ts'
-export type { PanelContent } from './content.ts'
+export { createContentEngine, renderContent, toContentList } from './content.ts'
+export type { ContentEngine, LeafContent, PanelContent } from './content.ts'

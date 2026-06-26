@@ -1,4 +1,4 @@
-export { useTable } from './use-table.ts'
+export { createTableEngine, useTable } from './use-table.ts'
 
 export type {
 	TableNode,
@@ -7,5 +7,6 @@ export type {
 	SortDirection,
 	PaginationConfig,
 	PaginationInfo,
+	TableEngine,
 	UseTableReturn,
 } from './types.ts'

@@ -1,8 +1,9 @@
-import { h, ref, watch, type Ref, type VNode } from 'vue'
+import { effectScope, h, onScopeDispose, ref, watch, type Ref, type VNode } from 'vue'
 import type {
 	FormNode,
 	FormChild,
 	FormController,
+	FormEngine,
 	UseFormReturn,
 	ArrayNode,
 	StepsNode,
@@ -436,16 +437,20 @@ export function dispatchField(
 	}
 }
 
-// ─── useForm composable ──────────────────────────────────────────────────
+// ─── Form engine ───────────────────────────────────────────────────────────
 
 /**
- * Wrap a form node in a Vue composable. Returns reactive state, errors,
- * touched tracking, loading state, a controller for external submit/reset,
- * and a render function that produces the form's VNode tree.
+ * Build a form engine — the setup-free core behind {@link useForm}. Owns its
+ * own (detached) effect scope, so it can be created anywhere, including lazily
+ * inside a container's content engine where there is no component `setup` to
+ * bind the validation watcher to. Call `dispose()` to stop the scope when the
+ * owner is done with it ({@link useForm} wires this to `onScopeDispose`; a
+ * container engine calls it from its own `dispose`).
  */
-export function useForm<TState extends Record<string, unknown>>(
+export function createFormEngine<TState extends Record<string, unknown>>(
 	node: FormNode<TState>,
-): UseFormReturn<TState> {
+): FormEngine<TState> {
+	const scope = effectScope(true)
 	const state = (node.stateRef ?? ref({ ...node.initial })) as Ref<TState>
 	const errors = (node.errorsRef ?? ref<Record<string, string>>({})) as Ref<Record<string, string>>
 	const touched = ref<Set<string>>(new Set())
@@ -472,16 +477,18 @@ export function useForm<TState extends Record<string, unknown>>(
 	}
 
 	let validationToken = 0
-	watch(
-		() => state.value,
-		async () => {
-			const token = ++validationToken
-			const result = await runValidation()
-			if (token !== validationToken) return
-			errors.value = result
-		},
-		{ deep: true, immediate: true },
-	)
+	scope.run(() => {
+		watch(
+			() => state.value,
+			async () => {
+				const token = ++validationToken
+				const result = await runValidation()
+				if (token !== validationToken) return
+				errors.value = result
+			},
+			{ deep: true, immediate: true },
+		)
+	})
 
 	async function triggerSubmit(): Promise<void> {
 		if (loading.value) return
@@ -559,5 +566,27 @@ export function useForm<TState extends Record<string, unknown>>(
 		loading,
 		controller,
 		render,
+		dispose: () => scope.stop(),
 	}
+}
+
+// ─── useForm composable ──────────────────────────────────────────────────
+
+/**
+ * Wrap a form node in a Vue composable. Returns reactive state, errors,
+ * touched tracking, loading state, a controller for external submit/reset,
+ * and a render function that produces the form's VNode tree.
+ *
+ * Thin wrapper over {@link createFormEngine}: it binds the engine's `dispose`
+ * to the surrounding component scope, so the validation watcher is torn down on
+ * unmount. Call it from `setup`. For nesting a form inside a container, the
+ * container's content engine calls `createFormEngine` directly and manages
+ * disposal itself.
+ */
+export function useForm<TState extends Record<string, unknown>>(
+	node: FormNode<TState>,
+): UseFormReturn<TState> {
+	const engine = createFormEngine(node)
+	onScopeDispose(engine.dispose)
+	return engine
 }

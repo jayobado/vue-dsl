@@ -1,5 +1,5 @@
-// Composable
-export { useForm } from './use-form.ts'
+// Composable + setup-free engine
+export { createFormEngine, useForm } from './use-form.ts'
 
 // Validation helpers
 export {
@@ -14,6 +14,7 @@ export type {
 	FormNode,
 	FormChild,
 	FormController,
+	FormEngine,
 	UseFormReturn,
 	InputNode,
 	SelectNode,

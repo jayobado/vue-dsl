@@ -89,7 +89,7 @@ Or pin in `deno.json`:
 ```jsonc
 {
   "imports": {
-    "@jayobado/vue-dsl": "jsr:@jayobado/vue-dsl@^0.2.3",
+    "@jayobado/vue-dsl": "jsr:@jayobado/vue-dsl@^0.2.4",
     "vue": "npm:vue@^3.5.13"
   }
 }
@@ -117,7 +117,7 @@ import { useForm, useQuery, useHead } from '@jayobado/vue-dsl'
 
 | Entry | Contents |
 | --- | --- |
-| `./dsl` | the declarative node layer — `useForm` (+ `required`, `custom`), `useTable`, plus the data-driven node vocabulary: `renderAction`/`renderActionGroup`, `renderDisplay` (text/badge/image), and `renderContent` (the container-content dispatcher) |
+| `./dsl` | the declarative node layer — `useForm` / `useTable` (plus setup-free `createFormEngine` / `createTableEngine` for nesting), the data-driven node vocabulary `renderAction`/`renderActionGroup`, `renderDisplay` (text/badge/image), and the container-content seam `renderContent` (leaf) / `createContentEngine` (full `PanelContent`, incl. nested forms & tables) |
 | `./query` | `useQuery`, `useMutation` — reactive wrappers over any Promise |
 | `./primitives` | headless composables: `useHead`, `useToasts`/`toast`, `useClipboard`, `useMediaQuery`, `useLocalStorage`, `useFloating`, `usePagination`, `useSelection`, `useClickOutside`, `useEscapeKey`, `useEventListener`, `useFocusTrap`, `useScrollLock`, `useResizeObserver`, `useIntersectionObserver`, `useDebounce`, `useInterval` |
 | `./elements` | typed element factories (`div`, `button`, `input`, `table`, … + `ElProps`/`InputElProps`/…) and `withMemo` / `createMemoCache` — render-function authoring |

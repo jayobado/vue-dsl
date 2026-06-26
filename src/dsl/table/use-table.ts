@@ -1,11 +1,12 @@
 // dsl/table/use-table.ts
 
-import { computed, h, type VNode, type Ref } from 'vue'
+import { computed, effectScope, h, onScopeDispose, type VNode, type Ref } from 'vue'
 import type {
 	TableNode,
 	ColumnDef,
 	SortState,
 	PaginationInfo,
+	TableEngine,
 	UseTableReturn,
 } from './types.ts'
 import type { ClassValue } from '../form/types.ts'
@@ -201,23 +202,27 @@ function renderDefaultError(error: Error): VNode {
 	return h('div', { class: 'vue-dsl-table-error' }, `Error: ${error.message}`)
 }
 
-// ─── useTable composable ─────────────────────────────────────────────────
+// ─── Table engine ────────────────────────────────────────────────────────
 
 /**
- * Wrap a table node in a Vue composable. Returns a render function that
- * produces the table's VNode tree, reactive to changes in the underlying
- * query, sort, and pagination state.
+ * Build a table engine — the setup-free core behind {@link useTable}. Owns its
+ * own (detached) effect scope so it can be created anywhere, including lazily
+ * inside a container's content engine. Call `dispose()` to stop the scope when
+ * the owner is done with it ({@link useTable} wires this to `onScopeDispose`; a
+ * container engine calls it from its own `dispose`).
  */
-export function useTable<TRow  extends Record<string, unknown>, TData = readonly TRow[]> (
-	node: TableNode<TRow, TData>
-): UseTableReturn {
-	const isFirstLoad = computed(() => {
-		return node.query.loading.value && node.query.data.value === undefined
-	})
+export function createTableEngine<TRow extends Record<string, unknown>, TData = readonly TRow[]>(
+	node: TableNode<TRow, TData>,
+): TableEngine {
+	const scope = effectScope(true)
 
-	const isRefetching = computed(() => {
+	const isFirstLoad = scope.run(() => computed(() => {
+		return node.query.loading.value && node.query.data.value === undefined
+	}))!
+
+	const isRefetching = scope.run(() => computed(() => {
 		return node.query.loading.value && node.query.data.value !== undefined
-	})
+	}))!
 
 	function render(): VNode {
 		const data = node.query.data.value
@@ -288,5 +293,25 @@ export function useTable<TRow  extends Record<string, unknown>, TData = readonly
 		return h('div', { class: 'vue-dsl-table-container' }, children)
 	}
 
-	return { render }
+	return { render, dispose: () => scope.stop() }
+}
+
+// ─── useTable composable ─────────────────────────────────────────────────
+
+/**
+ * Wrap a table node in a Vue composable. Returns a render function that
+ * produces the table's VNode tree, reactive to changes in the underlying
+ * query, sort, and pagination state.
+ *
+ * Thin wrapper over {@link createTableEngine}: binds the engine's `dispose` to
+ * the surrounding component scope. Call it from `setup`. For nesting a table
+ * inside a container, the container's content engine calls `createTableEngine`
+ * directly and manages disposal itself.
+ */
+export function useTable<TRow extends Record<string, unknown>, TData = readonly TRow[]>(
+	node: TableNode<TRow, TData>,
+): UseTableReturn {
+	const engine = createTableEngine(node)
+	onScopeDispose(engine.dispose)
+	return engine
 }

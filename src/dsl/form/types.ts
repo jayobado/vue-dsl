@@ -211,3 +211,12 @@ export interface UseFormReturn<TState extends Record<string, unknown>> {
 	controller: FormController
 	render: () => unknown
 }
+
+/**
+ * A {@link UseFormReturn} that owns its effect scope and exposes `dispose` to
+ * stop it. Produced by `createFormEngine` for setup-free / nested use; `useForm`
+ * wires `dispose` to the component scope and returns the same object.
+ */
+export interface FormEngine<TState extends Record<string, unknown>> extends UseFormReturn<TState> {
+	dispose: () => void
+}

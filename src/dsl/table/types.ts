@@ -69,3 +69,12 @@ export interface TableNode<TRow  extends Record<string, unknown> = Record<string
 export interface UseTableReturn {
 	render: () => VNode
 }
+
+/**
+ * A {@link UseTableReturn} that owns its effect scope and exposes `dispose` to
+ * stop it. Produced by `createTableEngine` for setup-free / nested use;
+ * `useTable` wires `dispose` to the component scope and returns the same object.
+ */
+export interface TableEngine extends UseTableReturn {
+	dispose: () => void
+}
