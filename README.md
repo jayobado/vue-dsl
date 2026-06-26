@@ -23,6 +23,9 @@ The lib gives you:
 - A grab-bag of headless **primitives** — document head/title (`useHead`),
   toasts, clipboard, media queries, click-outside, focus trap, observers,
   timing — the small composables every app otherwise rewrites.
+- Typed **element factories** (`div`, `button`, `input`, `table`, …) plus
+  `withMemo` — author components as plain render functions with a lighter
+  toolchain (no template compiler, no `.vue` SFCs; run runtime-only Vue).
 - Patterns for common things Vue itself doesn't ship — dialog layouts,
   dropdown menus, route-aware links — documented as recipes you copy into
   app code.
@@ -86,7 +89,7 @@ Or pin in `deno.json`:
 ```jsonc
 {
   "imports": {
-    "@jayobado/vue-dsl": "jsr:@jayobado/vue-dsl@^0.2.1",
+    "@jayobado/vue-dsl": "jsr:@jayobado/vue-dsl@^0.2.2",
     "vue": "npm:vue@^3.5.13"
   }
 }
@@ -117,6 +120,7 @@ import { useForm, useQuery, useHead } from '@jayobado/vue-dsl'
 | `./dsl` | `useForm` (+ `required`, `custom`) and `useTable` — the declarative forms & tables layer |
 | `./query` | `useQuery`, `useMutation` — reactive wrappers over any Promise |
 | `./primitives` | headless composables: `useHead`, `useToasts`/`toast`, `useClipboard`, `useMediaQuery`, `useLocalStorage`, `useFloating`, `usePagination`, `useSelection`, `useClickOutside`, `useEscapeKey`, `useEventListener`, `useFocusTrap`, `useScrollLock`, `useResizeObserver`, `useIntersectionObserver`, `useDebounce`, `useInterval` |
+| `./elements` | typed element factories (`div`, `button`, `input`, `table`, … + `ElProps`/`InputElProps`/…) and `withMemo` / `createMemoCache` — render-function authoring |
 | `.` (root) | re-exports all of the above |
 
 ### Requirements
@@ -220,6 +224,35 @@ toast.success('Saved')                                // imperative; useToasts()
 const isMobile = useMediaQuery('(max-width: 768px)')  // Ref<boolean>, SSR-safe
 useClickOutside(menuRef, () => (open.value = false))
 ```
+
+### Elements — render-function authoring
+
+Typed factories over `createVNode` for writing components without templates or
+SFCs (so you can run runtime-only Vue and skip the template compiler). Pair with
+`withMemo` to memoize static-heavy subtrees — the equivalent of the compiler's
+`v-memo`, which hand-written render trees don't get for free:
+
+```ts
+import { defineComponent } from 'vue'
+import { button, createMemoCache, div, h1, ul, withMemo } from '@jayobado/vue-dsl/elements'
+
+export default defineComponent({
+	props: { rows: { type: Array, required: true } },
+	setup(props) {
+		const cache = createMemoCache(1)
+		return () =>
+			div({ class: 'page' }, [
+				h1(null, 'Orders'),
+				withMemo([props.rows.length], () => ul(null, props.rows.map((r) => /* … */ r)), cache, 0),
+				button({ type: 'submit', onClick: save }, 'Save'),
+			])
+	},
+})
+```
+
+> This is a *lighter toolchain*, not raw speed — hand-written render trees miss
+> the SFC compiler's static-hoisting/patch-flag optimizations; `withMemo` is how
+> you claw that back where it matters.
 
 ## Where to go next
 

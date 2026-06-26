@@ -1,12 +1,13 @@
 {
 	"name": "@jayobado/vue-dsl",
-	"version": "0.2.1",
+	"version": "0.2.2",
 	"license": "MIT",
 	"exports": {
 		".": "./src/mod.ts",
 		"./primitives": "./src/primitives/mod.ts",
 		"./dsl": "./src/dsl/mod.ts",
-		"./query": "./src/query/mod.ts"
+		"./query": "./src/query/mod.ts",
+		"./elements": "./src/elements/mod.ts"
 	},
 
 	"imports": {
