@@ -20,6 +20,9 @@ The lib gives you:
   pagination, and reactive data sources.
 - `useQuery` and `useMutation` composables for wrapping any Promise-returning
   function in reactive state.
+- A grab-bag of headless **primitives** — document head/title (`useHead`),
+  toasts, clipboard, media queries, click-outside, focus trap, observers,
+  timing — the small composables every app otherwise rewrites.
 - Patterns for common things Vue itself doesn't ship — dialog layouts,
   dropdown menus, route-aware links — documented as recipes you copy into
   app code.
@@ -69,44 +72,66 @@ You'll likely find it frustrating if:
 
 ## Installation
 
-vue-dsl is meant to be copied into your project's `lib/` folder, not
-installed via a package manager. The expected layout:
+Published to JSR as [`@jayobado/vue-dsl`](https://jsr.io/@jayobado/vue-dsl). Vue
+is a peer dependency.
 
-```
-your-project/
-  src/
-    lib/
-      vue-dsl/
-        dsl/
-        query/
-        primitives/
-        mod.ts
-        ...
+**Deno:**
+
+```sh
+deno add jsr:@jayobado/vue-dsl
 ```
 
-Once copied, import from relative paths:
+Or pin in `deno.json`:
 
-```typescript
-import { useForm } from '@/lib/vue-dsl/dsl'
-import { useQuery } from '@/lib/vue-dsl/query'
+```jsonc
+{
+  "imports": {
+    "@jayobado/vue-dsl": "jsr:@jayobado/vue-dsl@^0.1.10",
+    "vue": "npm:vue@^3.5.13"
+  }
+}
 ```
 
-Path aliases (e.g., `@/lib/vue-dsl`) work with most Vue 3 toolchains (Vite,
-unbuild, etc.). Configure your `tsconfig.json` paths to match.
+**Node / npm** (via the JSR npm bridge):
+
+```sh
+npx jsr add @jayobado/vue-dsl
+```
+
+Prefer to vendor it? The lib is small and dependency-light (just Vue + an
+optional Standard Schema validator) — copy `src/` into your project and import
+from relative paths. Owning the patterns is fine; that's the original ethos.
+
+### Entry points
+
+```ts
+import { useForm, useTable }     from '@jayobado/vue-dsl/dsl'
+import { useQuery, useMutation } from '@jayobado/vue-dsl/query'
+import { useHead, toast }        from '@jayobado/vue-dsl/primitives'
+// …or everything from the root:
+import { useForm, useQuery, useHead } from '@jayobado/vue-dsl'
+```
+
+| Entry | Contents |
+| --- | --- |
+| `./dsl` | `useForm` (+ `required`, `custom`) and `useTable` — the declarative forms & tables layer |
+| `./query` | `useQuery`, `useMutation` — reactive wrappers over any Promise |
+| `./primitives` | headless composables: `useHead`, `useToasts`/`toast`, `useClipboard`, `useMediaQuery`, `useLocalStorage`, `useFloating`, `usePagination`, `useSelection`, `useClickOutside`, `useEscapeKey`, `useEventListener`, `useFocusTrap`, `useScrollLock`, `useResizeObserver`, `useIntersectionObserver`, `useDebounce`, `useInterval` |
+| `.` (root) | re-exports all of the above |
 
 ### Requirements
 
-- Vue 3 (Composition API)
+- Vue 3.5+ (Composition API)
 - TypeScript with `strict: true`
-- A bundler/dev server that handles TypeScript and Vue (Vite is the standard)
+- A bundler/dev server that handles TypeScript + Vue (Vite, or rolldown/esbuild via Deno)
 
 ### What you bring
 
 - CSS. The lib produces VNodes with class names; the visual layer is yours.
-- Your own RPC client. The query composables wrap any Promise-returning
+- Your own data client. `useQuery` / `useMutation` wrap any Promise-returning
   function.
-- Standard Schema (Zod, Valibot, ArkType, etc.) if you want schema-based form
-  validation. Rule-based validation works without one.
+- A Standard Schema validator (Zod, Valibot, ArkType, …) if you want
+  schema-based form validation. Rule-based validation works without one.
 
 ## Quick start
 
@@ -114,7 +139,7 @@ A minimal form using the lib:
 
 ```typescript
 import { defineComponent, h } from 'vue'
-import { useForm } from '@/lib/vue-dsl/dsl'
+import { useForm } from '@jayobado/vue-dsl/dsl'
 
 interface NoteState {
 	title: string
@@ -124,15 +149,16 @@ interface NoteState {
 export const NewNoteView = defineComponent({
 	setup() {
 		const form = useForm<NoteState>({
+			node: 'form',
 			initial: { title: '', body: '' },
 			onSubmit: async (state) => {
 				await api.notes.create(state)
 				// Navigate, show toast, etc.
 			},
 			children: [
-				{ type: 'input',    name: 'title', label: 'Title', required: true },
-				{ type: 'textarea', name: 'body',  label: 'Body',  rows: 5 },
-				{ type: 'button',   label: 'Save', action: 'submit' },
+				{ node: 'input',    name: 'title', label: 'Title', required: true },
+				{ node: 'textarea', name: 'body',  label: 'Body',  rows: 5 },
+				{ node: 'button',   label: 'Save', action: 'submit' },
 			],
 		})
 
@@ -143,6 +169,10 @@ export const NewNoteView = defineComponent({
 	},
 })
 ```
+
+> Field nodes use a `node` discriminant (`'input'`, `'select'`, `'textarea'`,
+> `'checkbox'`, `'radio'`, `'array'`, `'steps'`, `'button'`), and the top-level
+> form node is `node: 'form'`.
 
 What's happening:
 
@@ -160,6 +190,36 @@ What's happening:
 From here, you'd add schema validation, more field types, array sections for
 tabular forms, steps for wizards, and a query composable for data fetching.
 See [Concepts](docs/concepts.md) and [The declarative layer](docs/declarative.md).
+
+### Data — `useQuery` / `useMutation`
+
+Reactive wrappers over any Promise-returning function (bring your own client):
+
+```ts
+import { useQuery, useMutation } from '@jayobado/vue-dsl/query'
+
+// fires immediately; re-runs when reactive deps change; stale results discarded
+const { data: orders, loading, error, refetch } = useQuery(() => api.orders.list())
+
+// manual; call mutate(...) when ready
+const create = useMutation((input: NewOrder) => api.orders.create(input), {
+	onSuccess: () => refetch(),
+})
+// create.mutate({ ... });  create.loading.value;  create.error.value
+```
+
+### Primitives
+
+Headless composables — no markup, just reactive behavior:
+
+```ts
+import { useHead, toast, useMediaQuery, useClickOutside } from '@jayobado/vue-dsl/primitives'
+
+useHead({ title: () => `Order ${order.value.id}` })  // reactive document title (+ meta)
+toast.success('Saved')                                // imperative; useToasts() gives the reactive list + a renderer
+const isMobile = useMediaQuery('(max-width: 768px)')  // Ref<boolean>, SSR-safe
+useClickOutside(menuRef, () => (open.value = false))
+```
 
 ## Where to go next
 
