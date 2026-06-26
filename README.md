@@ -18,6 +18,10 @@ The lib gives you:
   multi-step flows.
 - A declarative tables layer for read-only data display with sorting,
   pagination, and reactive data sources.
+- A data-driven node vocabulary — container nodes (`useModal`, `useTabs`,
+  `useStepper`, `useAccordion`, `useBlock`, `useAlert`) plus actions and display
+  items — that describe whole screens as data, with forms, tables, and other
+  containers nesting through one `PanelContent` union.
 - `useQuery` and `useMutation` composables for wrapping any Promise-returning
   function in reactive state.
 - A grab-bag of headless **primitives** — document head/title (`useHead`),
@@ -39,9 +43,10 @@ opinionated layer for forms, tables, and async data.
 
 To be honest about scope:
 
-- **Not a Vue component library.** No prebuilt date pickers, modals,
-  comboboxes, or rich text editors. The lib produces VNodes; you handle the
-  visual layer via CSS and your own components.
+- **Not a styled component library.** No prebuilt date pickers, comboboxes, or
+  rich text editors. The container nodes (`useModal`, `useTabs`, …) emit
+  unstyled VNode *structure* with class names — not themed widgets. You handle
+  the visual layer via CSS and your own components.
 - **Not a Vue plugin.** No `app.use(vueDsl)`. The lib is just composables and
   types you import.
 - **Not an RPC layer.** `useQuery` and `useMutation` wrap any
