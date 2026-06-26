@@ -86,7 +86,7 @@ Or pin in `deno.json`:
 ```jsonc
 {
   "imports": {
-    "@jayobado/vue-dsl": "jsr:@jayobado/vue-dsl@^0.1.10",
+    "@jayobado/vue-dsl": "jsr:@jayobado/vue-dsl@^0.2.1",
     "vue": "npm:vue@^3.5.13"
   }
 }
